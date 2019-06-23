@@ -1,0 +1,48 @@
+#!/bin/bash
+
+echo $1
+echo ${BASH_SOURCE%/*}
+
+res=110m
+filename=ne_${res}_admin_0_countries
+
+rm -rvf build
+mkdir -p build
+
+# Download and unzip the shape files
+curl -o ${BASH_SOURCE%/*}/${filename}.zip -L http://naciscdn.org/naturalearth/${res}/cultural/${filename}.zip
+unzip -od build ${BASH_SOURCE%/*}/${filename}.zip
+chmod a-x build/${filename}.*
+
+# Convert to GeoJSON
+shp2json build/${filename}.shp -o build/${filename}.geo.json
+
+# Extract only relevant geospatial features and their properties (e.g., names).
+# Natural Earth's shapefile is missing some ISO 3166-1 codes for France and Norway.
+# We add them in here.
+process_d="
+{ ISO_A2, ISO_A3, ISO_N3, NAME, FORMAL_EN } = d.properties,
+
+ISO_A2 = (ISO_N3 === '250') ? 'FR' : ISO_A2,
+ISO_A3 = (ISO_N3 === '250') ? 'FRA' : ISO_A3,
+ISO_A2 = (NAME === 'Norway') ? 'NO' : ISO_A2,
+ISO_A3 = (NAME === 'Norway') ? 'NOR' : ISO_A3,
+ISO_N3 = (NAME === 'Norway') ? '578' : ISO_N3,
+d.properties = { ISO_A2, ISO_A3, ISO_N3, NAME, FORMAL_EN },
+d.id = ISO_A3,
+d"
+
+cat build/${filename}.geo.json | \
+ndjson-split 'd.features' | \
+ndjson-map "$process_d" > build/${filename}.ndjson
+
+# Convert to compressed topojson
+geo2topo -n countries=build/${filename}.ndjson | \
+toposimplify -p 1 -f | \
+topoquantize 1e5 > ${BASH_SOURCE%/*}/${filename}.json
+
+
+## References
+#  https://d3-geomap.github.io/map/choropleth/world/
+#  https://github.com/topojson/world-atlas
+#  https://medium.com/@mbostock/command-line-cartography-part-1-897aa8f8ca2c
