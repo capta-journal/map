@@ -8,6 +8,8 @@ Given how familiar choropleths are, it should be in every data journalist's tool
 ```{vl file=annual-healthcare-expenditure-per-capita.vl.json}
 ```
 
+*Note: Source code and data for this article, including all visualizations, are in this [Github repo](https://github.com/capta-journal/map). You are welcome to fork the repo, edit it, and republish your version within [capta.studio](https://www.capta.studio/publish).*
+
 ## Preliminary
 There are three things you need to create a choropleth. One is obviously some **data** you want to visualize over a map. As a data analyst this is where your expertise comes in. For our example we'll be based on [Our World in Data](https://ourworldindata.org/grapher/annual-healthcare-expenditure-per-capita). The original dataset includes healthcare expenditure data for various years. We filtered it down to only 2014 statistics. Here's a look at our CSV file:
 
