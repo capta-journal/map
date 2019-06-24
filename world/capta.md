@@ -9,12 +9,12 @@ Given how familiar choropleths are, it should be in every data journalist's tool
 ```
 
 ## Preliminary
-There are three things you need to create a choropleth. One is obviously some **data** you want to visualize over a map. As a data analyst this is where your expertise comes in. For our example we'll get the same data used in [Our World in Data](https://ourworldindata.org/grapher/annual-healthcare-expenditure-per-capita). The original dataset includes healthcare expenditure data for various years. We filtered it down to look just at 2014 statistics. Here's a look at our CSV file:
+There are three things you need to create a choropleth. One is obviously some **data** you want to visualize over a map. As a data analyst this is where your expertise comes in. For our example we'll be based on [Our World in Data](https://ourworldindata.org/grapher/annual-healthcare-expenditure-per-capita). The original dataset includes healthcare expenditure data for various years. We filtered it down to only 2014 statistics. Here's a look at our CSV file:
 
 ```{csv file=data/annual-healthcare-expenditure-per-capita-2014.csv}
 ```
 
-After providing your **data**, you'll need a **map** as the basis of your choropleth and some **code** to tie your data and the map together. Since there's an entire profession of cartographers just to draw maps, mapmaking can be a fairly intricate task. However, we believe a small number of pre-made maps can cover a substantial portion of choropleths that you as a data analyst will likely need. For our current example we'll use [a ready-to-use map of the world showing country boundaries](topojson/ne_110m_admin_0_countries.json). We have a catalog of other pre-made maps to show smaller regions or different boundaries. And if you don't see one that fits your needs, you can create an issue on Github to ask the community for help. Chances are some other people will have the same needs and will be happy to collaborate to add to this repo of useful maps.
+After providing your **data**, you'll need a **map** as the basis of your choropleth and some **code** to tie your data and the map together. There's an entire profession of cartographers dedicated to making maps. However, we believe there's an 80/20 rule here. A small number of pre-made maps can cover a substantial portion of choropleths that a data analyst will likely need. For our current example we'll use [a ready-to-use map of the world showing country boundaries](topojson/ne_110m_admin_0_countries.json). We have a catalog of other pre-made maps to show smaller regions or different boundaries. And if you don't see one that fits your needs, you can create an issue on Github to ask the community for help. Chances are some other people will have the same needs and will be happy to collaborate to add to this repo of useful maps.
 
 (All our maps are represented in a format called [TopoJSON](https://github.com/topojson/topojson). From here on references to "topojson file" simply means a specific format of map file.)
 
@@ -69,10 +69,10 @@ As I said earlier, vega-lite works with a specification rather than programming 
 
 The `mark` property tells vega-lite what type of visual 'mark' to display our `data`. For a choropleth this will always be `geoshape`. Here we also specify colors for drawing the map. Feel free to leave them out or try different colors.
 
-The `projection` property is uniquely used by map visualizations. It specifies a method to project points and shapes from a spherical globe onto a 2-D surface like your screen. Different projections make different trade-offs between accurate depictions of area, angle, etc. You may have heard of the Mercator projection; it's a very popular way of drawing maps and it's what Google Maps use. However, Mercator tends to exaggerate areas near North and South Poles. For a world choropleth I prefer the `naturalEarth1` projection used here (as well as by the original Our World in Data map), which distorts the northern and southern areas less but doesn't maintain the angles as well. Do not use this map for navigation, as true north is not always straight up. :) [Here's a tool to see various common projections](https://vega.github.io/vega/docs/projections/) that are supported by vega-lite. Feel free to switch this from `naturalEarth1` to `mercator` or other projections.
+The `projection` property is uniquely used by map visualizations. It specifies a method to project points and shapes from a spherical globe onto a 2-D surface like your screen. Different projections make different trade-offs between accurate depictions of area, angle, etc. You may have heard of the Mercator projection; it's a very popular way of drawing maps and it's what Google Maps use. However, Mercator tends to exaggerate areas near North and South Poles. For a world choropleth I prefer the `naturalEarth1` projection used here (as well as by the original Our World in Data map), which distorts the northern and southern areas less but doesn't maintain the angles as well. [Here's a tool to see various common projections](https://vega.github.io/vega/docs/projections/) that are supported by vega-lite. Feel free to switch this from `naturalEarth1` to `mercator` or other projections.
 
 ### Step 2: Add Color
-So we've created a map, but to make it a choropleth we need to bring in our healthcare expenditure data and modulate each country's color based on it. To do so we will add a couple properties to the vega-lite spec. The properties we had before stay the same and their details are not shown.
+So we've created a map, but to make it a choropleth we need to bring in our healthcare expenditure data and modulate each country's color based on it. To do so we will add a couple properties to the vega-lite spec.
 ```json
 {
   "$schema": ...,
@@ -132,7 +132,7 @@ The `transform` property is the key to making a choropleth. The `encoding` prope
 ```
 
 ### Step 3: Fix Missing Data
-But something seems to be missing... Oh, Antartica, Greenland, Somalia, and North Korea are not on the map anymore. Turns out we don't have any healthcare expenditure statistics for those regions. Argh.... Missing data doesn't spark joy... And vega-lite's lookup transform pulled a Marie Kondo and threw those regions away. To get them back, we first set the vega-lite configuration `invalidValues` to `null`, which tells it to set missing values to null. (The default was to drop the entire data point.) And when determining their color, we'll find all these `null` values and give them a special color (light gray).
+But something seems to be missing... Oh, Antartica, Greenland, Somalia, and North Korea are not on the map anymore. Turns out we don't have any healthcare statistics for those regions. Argh.... missing data doesn't spark joy... But we probably shouldn't KonMari those regions away. To get them back, we first set the vega-lite configuration `invalidValues` to `null`, which tells it to set missing values to null. (The default was to drop the entire data point.) And when determining their color, we'll find all these `null` values and give them a special color (light gray).
 ```json
 {
   "$schema": ...,
@@ -224,53 +224,6 @@ And voila, much more contrast.
 
 This change to the color scale starts to reveal more information. The US is still far darker than any other country. But now we see that many of the healthcare underspenders are clustered in central Africa. Neighboring countries in South and Southeast Asia now look very different. Indonesia ($299) is spending twice as much as its neighbor Papua New Guinea ($109). Similarly, India ($267) is outspending its neighbors Nepal ($137) and Pakistan ($129). Previously they all blended together as US ($9400) completely tipped the scale.
 
+The careful reader may also have noticed that the formatting inside the tooltip has changed. If you're interested, you can look at the tooltip section in the [code](annual-healthcare-expenditure-per-capita.vl.json) to see how it's configured.
 
-
-
-
-```{vl}
-{
-  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
-  "height": 400,
-  "projection": {
-    "type": "mercator",
-    "scale": 110,
-    "center": [0, 20]
-  },
-  "mark": { "type": "geoshape", "fill": "lightgray", "stroke": "gray" },
-  "data": {
-    "url": "data/annual-healthcare-expenditure-per-capita-2014.csv"
-  },
-  "transform": [
-    {
-      "lookup": "Code",
-      "from": {
-        "data": {
-          "url": "topojson/ne_110m_admin_0_countries.json",
-          "format": { "type": "topojson", "feature": "countries" }
-        },
-        "key": "id"
-      },
-      "as": "geo"
-    }
-  ],
-  "encoding": {
-    "shape": {"field": "geo", "type": "geojson"},
-    "color": {
-      "field": " (constant 2011 international $)",
-      "type": "quantitative",
-      "legend": { "title": "Healthcare spend ($)" },
-      "scale": { "type": "log", "scheme": "redyellowblue" }
-    },
-    "tooltip": [{
-      "field": "Entity",
-      "type": "nominal",
-      "axis": { "title": "Country" }
-    },{
-      "field": " (constant 2011 international $)",
-      "type": "quantitative",
-      "axis": { "title": "per capita healthcare expenditure" }
-    }]
-  }
-}
-```
+So that's it. To create your own world choropleth, all you have to do now is switch in your own data source. Need some inspiration?? [The World Factbook](https://www.cia.gov/library/publications/resources/the-world-factbook/docs/rankorderguide.html) has lots of data about the world, and it's all free and digital!
