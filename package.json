@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "create_world_topojson": "./world/topojson/create",
-    "create_usa_states_topojson": "./countries/USA/states/create_topojson",
+    "create_usa_states_topojson": "./countries/USA/states/topojson/create",
     "create_usa_counties_topojson": "./countries/USA/counties/create_topojson",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
