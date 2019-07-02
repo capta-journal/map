@@ -18,7 +18,8 @@ shp2json build/${filename}.shp -o build/${filename}.geo.json
 
 # Extract only relevant geospatial features and their properties (e.g., names)
 process_d="
-{ GEOID } = d.properties,
+{ GEOID, STATEFP, STUSPS, NAME } = d.properties,
+d.properties = { GEOID, STATEFP, STUSPS, NAME },
 d.id = GEOID,
 d"
 
