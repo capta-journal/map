@@ -98,3 +98,58 @@ The previous three steps are sufficient for making a choropleth. However, this m
 
 For this exercise I'll change the choropleth to show percentage population growth and the color scale indexed around the national growth rate. For your own choropleth you may have a different set of customizations (or none at all). I've chosen this set of changes mostly because it's a realistic requirement while also illustrates a few techniques.
 
+
+
+```{vl}
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+  "data": {
+    "url": "topojson/cb_2018_us_state_5m.json",
+    "format": { "type": "topojson", "feature": "states" }
+  },
+  "projection": { "type": "albersUsa" },
+  "mark": { "type": "geoshape", "fill": "lightgray", "stroke": "gray" },
+  "transform": [{
+    "lookup": "id",
+    "from": {
+      "data": { "url": "data/PEP_2018_PEPTCOMP.csv" },
+      "key": "GEO\\.id2",
+      "fields": ["popchg4201072018"]
+    }
+  },{
+    "lookup": "id",
+    "from": {
+      "data": { "url": "data/PEP_2018_PEPANNRES.csv" },
+      "key": "GEO\\.id2",
+      "fields": ["rescen42010"]
+    }
+  },{
+    "calculate": "datum.popchg4201072018 / datum.rescen42010",
+    "as": "growth"
+  }],
+  "encoding": {
+    "color": {
+      "field": "growth",
+      "type": "quantitative",
+      "scale": { "scheme": "purplegreen" },
+      "legend": {
+        "title": "Population Growth Rate (2010-2018)",
+        "format": ".1%"
+      }
+    },
+    "tooltip": [
+      {
+        "field": "properties.NAME",
+        "type": "nominal",
+        "axis": { "title": "State" }
+      },{
+        "field": "growth",
+        "type": "quantitative",
+        "format": ".1%",
+        "axis": { "title": "Growth Rate" }
+      }
+    ]
+  }
+}
+```
+
