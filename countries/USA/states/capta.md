@@ -40,15 +40,20 @@ Note the use of `\\.` in specifying `key`.
   "encoding": {
     "color": {
       "field": "popchg4201072018",
-      "type": "quantitative",
-      "legend": { "title": "Total Population Change (2010-2018)" }
+      "type": "quantitative"
     }
   }
 }
 ```
 
-### Step 3: Optional - Customize Tooltip
-If you mouse over the states in the above choropleth (or tap on a mobile device), you'll see a tooltip showing the underlying data. By default it repeats the encoded information in a generic format. We show you how to customize it a little bit.
+### Step 3: Customize Legend and Tooltip
+The population information is now encoded on the map. Let's go ahead and fix a few visual loose ends.
+
+The default legend is quite poor in this case. It assumes the title from our data's field name ("popchg4201072018"), which will just be cryptic to our readers. The labels on the legend ("1,000,000", "2,000,000", and "3,000,000") are so long that they're squished together. Let's customize the title and reformat the labels.
+
+If you mouse over the states (or tap on a mobile device), you'll see a tooltip showing details of the underlying data. The default tooltip in this case has the similar problems as the legend: the title is again the cryptic "popchg4201072018" and the labels can be better formatted. Here the labels don't need to be shortened, but we want to add commas or periods to make them more readable. In addition, we want to help the reader identify states by showing their names in the tooltip. Fortunately, the ready-to-use topojson file includes not only the data to render a map, but it also has other useful information in its `properties` object. State name is encoded in `properties.NAME` and we'll show that in our tooltip.
+
+The added code is shown below. Of note is the `titleLimit` for legend. It's the limit (in pixels) of how long the title can be. [The default is 180](https://vega.github.io/vega-lite/docs/legend.html#title) which is too short for our title. As mentioned above, we change how the numbers are formatted using the `format` property. Explanation for the code is given in the [(Vega-Lite/D3) documentation](https://github.com/d3/d3-format#locale_format).
 
 ```{vl}
 {
@@ -71,7 +76,11 @@ If you mouse over the states in the above choropleth (or tap on a mobile device)
     "color": {
       "field": "popchg4201072018",
       "type": "quantitative",
-      "legend": { "title": "Total Population Change (2010-2018)" }
+      "legend": {
+        "title": "Total Population Change (2010-2018)",
+        "titleLimit": 300,
+        "format": "~s"
+      }
     },
     "tooltip": [
       {
