@@ -140,9 +140,12 @@ For this exercise I'll change the choropleth to show percentage population growt
     "color": {
       "field": "growth",
       "type": "quantitative",
-      "scale": { "scheme": "purplegreen" },
+      "scale": {
+        "scheme": "purplegreen"
+      },
       "legend": {
         "title": "Population Growth Rate (2010-2018)",
+        "titleLimit": 300,
         "format": ".1%"
       }
     },
@@ -151,6 +154,77 @@ For this exercise I'll change the choropleth to show percentage population growt
         "field": "properties.NAME",
         "type": "nominal",
         "axis": { "title": "State" }
+      },{
+        "field": "popchg4201072018",
+        "type": "quantitative",
+        "format": ",",
+        "axis": { "title": "Total Population Change" }
+      },{
+        "field": "growth",
+        "type": "quantitative",
+        "format": ".1%",
+        "axis": { "title": "Growth Rate" }
+      }
+    ]
+  }
+}
+```
+
+In addition to converting our choropleth to show growth rate instead of total population change, we also changed the color scheme to a "divergent" one, meaning the color intensity goes up on both ends of the scale. For our data, the default center of the scale has no particular meaning, so we should change it to something more interpretable. An obvious choice is to center at zero. To do so, we could specify a scale from -15% to +15%, which would cover all possible values while ensuring the center is at zero. (From the graph above we know Utah is the fastest growing state at 14.4%.)
+
+We'll leave it to you to make that change. Here we'll do something a little fancier. From looking at the original data, we know the total U.S. population increase was 18,409,329, based on a 2010 population of 308,745,538. That is, the U.S. population has grown 6%. Let's use a color range to help see states that are growing faster than this national average versus the slower growing states. With a little bit of arithmetic, we decide to use a scale from -3% to 15%, to ensure centering at 6%.
+
+```{vl}
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+  "data": {
+    "url": "topojson/cb_2018_us_state_5m.json",
+    "format": { "type": "topojson", "feature": "states" }
+  },
+  "projection": { "type": "albersUsa" },
+  "mark": { "type": "geoshape", "fill": "lightgray", "stroke": "gray" },
+  "transform": [{
+    "lookup": "id",
+    "from": {
+      "data": { "url": "data/PEP_2018_PEPTCOMP.csv" },
+      "key": "GEO\\.id2",
+      "fields": ["popchg4201072018"]
+    }
+  },{
+    "lookup": "id",
+    "from": {
+      "data": { "url": "data/PEP_2018_PEPANNRES.csv" },
+      "key": "GEO\\.id2",
+      "fields": ["rescen42010"]
+    }
+  },{
+    "calculate": "datum.popchg4201072018 / datum.rescen42010",
+    "as": "growth"
+  }],
+  "encoding": {
+    "color": {
+      "field": "growth",
+      "type": "quantitative",
+      "scale": {
+        "domain": [-0.03, 0.15],
+        "scheme": "purplegreen"
+      },
+      "legend": {
+        "title": "Population Growth Rate (2010-2018), centered around national average of 6%",
+        "titleLimit": 500,
+        "format": ".1%"
+      }
+    },
+    "tooltip": [
+      {
+        "field": "properties.NAME",
+        "type": "nominal",
+        "axis": { "title": "State" }
+      },{
+        "field": "popchg4201072018",
+        "type": "quantitative",
+        "format": ",",
+        "axis": { "title": "Total Population Change" }
       },{
         "field": "growth",
         "type": "quantitative",
