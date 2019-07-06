@@ -1,0 +1,60 @@
+
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+  "data": {
+    "url": "topojson/cb_2018_us_state_5m.json",
+    "format": { "type": "topojson", "feature": "states" }
+  },
+  "projection": { "type": "albersUsa" },
+  "mark": { "type": "geoshape", "fill": "lightgray", "stroke": "gray" },
+  "transform": [{
+    "lookup": "id",
+    "from": {
+      "data": { "url": "data/PEP_2018_PEPTCOMP.csv" },
+      "key": "GEO\\.id2",
+      "fields": ["popchg4201072018"]
+    }
+  },{
+    "lookup": "id",
+    "from": {
+      "data": { "url": "data/PEP_2018_PEPANNRES.csv" },
+      "key": "GEO\\.id2",
+      "fields": ["rescen42010"]
+    }
+  },{
+    "calculate": "datum.popchg4201072018 / datum.rescen42010",
+    "as": "growth"
+  }],
+  "encoding": {
+    "color": {
+      "field": "growth",
+      "type": "quantitative",
+      "scale": {
+        "domain": [-0.03, 0.15],
+        "scheme": "purplegreen"
+      },
+      "legend": {
+        "title": "Population Growth Rate (2010-2018), centered around national average of 6%",
+        "titleLimit": 500,
+        "format": ".1%"
+      }
+    },
+    "tooltip": [
+      {
+        "field": "properties.NAME",
+        "type": "nominal",
+        "axis": { "title": "State" }
+      },{
+        "field": "popchg4201072018",
+        "type": "quantitative",
+        "format": ",",
+        "axis": { "title": "Total Population Change" }
+      },{
+        "field": "growth",
+        "type": "quantitative",
+        "format": ".1%",
+        "axis": { "title": "Growth Rate" }
+      }
+    ]
+  }
+}

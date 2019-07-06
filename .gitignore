@@ -89,4 +89,4 @@ typings/
 
 # Our temporary build directory. (E.g., unzipping shapefiles)
 build/
-countries/
+countries/USA/counties/
