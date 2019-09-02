@@ -1,4 +1,21 @@
-# State Map of US
+# Guide to Showing State-by-State Data on a Map
+
+![Google image search of "by state"](data/google_image_search_by_state.png)
+
+The above screenshot shows the result of Googling "by state." As a data analyst, you too have probably dealt with data organized by state at some point in your career. Visualizing such data on a map can help you spot regional trends and anomalies. It's also a more attractive way to present your analysis, as a bar chart with 50 bars is just not very pretty.
+
+You may also know that creating such thematic map (technically known as a [choropleth](https://en.wikipedia.org/wiki/Choropleth_map)) is non-trivial. You would either reach for specialized geospatial tools or dive deep into Javascript/D3 programming. Here I'll show you a much simpler alternative using [Vega-Lite](https://vega.github.io/vega-lite/), a visualization language where you specify your graph using JSON. At the end of this tutorial, you'll have created this population growth choropleth, and a template that you can reuse with your own data.
+
+```{vl file=pop_growth_rate.vl.json}
+```
+*Note: Source code and data for this article, including all visualizations, are in this [Github repo](https://github.com/capta-journal/map). You are welcome to fork the repo, edit it, and republish your version within [capta.studio](https://www.capta.studio/publish).*
+
+## Preliminary
+There are three things you need to create a choropleth. One is obviously some **data** you want to visualize over a map. For our example we'll use [population estimates from the U.S. Census Bureau](https://www.census.gov/data/tables/time-series/demo/popest/2010s-state-total.html). We've downloaded the data as a [CSV file](data/PEP_2018_PEPTCOMP.csv) and included it in [this document's repo](https://github.com/capta-journal/map) for archive. 
+
+After providing your **data**, you'll need a **map** as the basis of your choropleth and some **code** to tie your data and the map together. While there's an entire profession of cartographers dedicated to making maps, we believe a small number of pre-made maps can cover a substantial portion of choropleths that you will likely need.
+
+## Building the Choropleth
 
 ### Step 1: Show a Map
 
@@ -103,7 +120,7 @@ The added code is shown below. Of note is the `titleLimit` for legend. It's the 
 The previous three steps are sufficient for making a usable choropleth. For making your own choropleth, that may be all the code you'll need. However, this minimal attempt may not always bring out the necessary insights from data, which can be context-specific. For our population change visualization, an analyst may want to bring out different points:
 1. The color scale is linear, while population change is not. The 3.5M additional residents in Texas is more than the total population of some states. It's overwhelming and (misleadingly) makes the rest of the country look stable.
 2. Depending on the context, the relative population change may be more important than the absolute population change. For example, if I'm a business looking for additional customers, I may care only about the absolute number. On the other hand, if I'm a sociologist investigating population trends, the relative number would be more useful.
-3. The color scale could be locked onto special reference values. For example, population change can, and does, have negative values. It could be useful to have a color scale that locks onto zero and differentiates between positive and negative growth. As an alternative, one may "zero-indexed" on the *national growth rate* instead, so the differentiation is between those growing faster than average and those that are slower. This would be helpful in understand where the population gravity is shifting.
+3. The color scale can be locked onto special reference values. For example, population change can, and does, have negative values. It could be useful to have a color scale that locks onto zero and differentiates between positive and negative growth. As an alternative, one may "zero-indexed" on the *national growth rate* instead, so the differentiation is between those growing faster than average and those that are slower. This would be helpful in understand where the population gravity is shifting.
 
 For this exercise I'll change the choropleth to show percentage population growth and the color scale indexed around the national growth rate. For your own choropleth you may have a different set of customizations (or none at all). I've chosen this set of changes mostly because it's a realistic requirement while also illustrates a few techniques.
 
