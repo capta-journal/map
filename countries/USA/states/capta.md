@@ -2,9 +2,9 @@
 
 ![Google image search of "by state"](data/google_image_search_by_state.png)
 
-The above screenshot shows the result of Googling "by state." As a data analyst, you too have probably dealt with data organized by state at some point. Visualizing such data on a map can help you spot regional trends and anomalies. It's also a more attractive way to present your analysis, as a bar chart with 50 bars is just not very pretty.
+The above screenshot shows the result of Googling images "by state." As a data analyst, you too have probably dealt with data organized by state at some point. Visualizing such data on a map can help you spot regional trends and anomalies. It's also a more attractive way to present your analysis, as a bar chart with 50 bars is just not very pretty.
 
-You may also know that creating such thematic map (technically known as a [choropleth](https://en.wikipedia.org/wiki/Choropleth_map)) is non-trivial. You either have to reach for specialized geospatial tools or dive deep into Javascript/D3 programming. Here I'll show you a much simpler alternative using [Vega-Lite](https://vega.github.io/vega-lite/), a visualization language where you specify your graph using JSON. At the end of this tutorial, you'll have created this population growth choropleth.
+You may also know that creating such thematic map (technically known as a [choropleth](https://en.wikipedia.org/wiki/Choropleth_map)) is non-trivial. You either have to reach for specialized geospatial tools or dive deep into Javascript/D3 programming. Here I'll show you a much simpler alternative using [Vega-Lite](https://vega.github.io/vega-lite/), a visualization language where you specify your graph using JSON. At the end of this tutorial, you'll have created this population growth choropleth:
 
 ```{vl file=pop_growth_rate.vl.json}
 ```
@@ -21,12 +21,12 @@ We'll show how we build the choropleth above in four steps. After the first two 
     "url": "topojson/cb_2018_us_state_5m.json",
     "format": { "type": "topojson", "feature": "states" }
   },
-  "projection": { "type": "albersUsa" },
-  "mark": { "type": "geoshape", "fill": "lightgray", "stroke": "gray" }
+  "mark": { "type": "geoshape", "fill": "lightgray", "stroke": "gray" },
+  "projection": { "type": "albersUsa" }
 }
 ```
 
-The foundation of a choropleth is a map, and this is often where most people get stuck. There are two challenges. First is whether your visualization tool even supports rendering of maps. Fortunately [Vega-Lite](https://vega.github.io/vega-lite/) provides great support for geospatial visualization. In fact, the United States map above is rendered by just a few lines:
+The foundation of a choropleth is a map, and this is often where most people get stuck. Fortunately, [Vega-Lite](https://vega.github.io/vega-lite/) provides great support for geospatial visualization. The United States map above is rendered by just a few lines:
 
 ```json
 {
@@ -35,14 +35,18 @@ The foundation of a choropleth is a map, and this is often where most people get
     "url": "topojson/cb_2018_us_state_5m.json",
     "format": { "type": "topojson", "feature": "states" }
   },
-  "projection": { "type": "albersUsa" },
-  "mark": { "type": "geoshape", "fill": "lightgray", "stroke": "gray" }
+  "mark": { "type": "geoshape", "fill": "lightgray", "stroke": "gray" },
+  "projection": { "type": "albersUsa" }
 }
 ```
 
-While the first challenge is technical, the second challenge is about data: specifying the geometrical shapes to render a map. This challenge is solved in the Vega-Lite spec above by the file `cb_2018_us_state_5m.json`. This file, in TopoJSON format, contains data (in lat/lon) on the shape and location of all 50 states. We created it based on digital data from the Census Bureau. The code and the gory details to generate this file is documented elsewhere. But unless you're looking to single-handedly revise state boundaries, feel free to reuse our file. In addition, we have a catalog of other pre-made maps for you to build other choropleths (countries of the world, counties in US, etc.) And if you don’t see one that fits your need, you can create an issue on Github to ask the community for help. Chances are some other people will have the same need and will be happy to help create it.
+Besides Vega-Lite's concise grammar for geospatial visualization, the other part of the secret sauce is in the file `cb_2018_us_state_5m.json`, referenced in the `data.url` property above. This file, in a geospatial file format called [TopoJSON](https://github.com/topojson/topojson), contains data (in lat/lon) for the shape and location of all 50 states. We created it based on digital data from the Census Bureau. The code and the gory details to generate this file is documented elsewhere. We're open-sourcing the resulting data so you can reuse it as a "black box."
 
+Before continuing, let's understand the JSON spec file above in a bit more detail. The `$schema` property simply says this JSON file is a Vega-Lite specification. The `data` property points to our map file. Vega-Lite needs to know that this file is in TopoJSON `format.type`. A TopoJSON file can encode multiple `feature`s of a map to show different boundaries. For example, a map of the US may show states, counties, zip codes, etc. The `cb_2018_us_state_5m.json` file includes only the `states` feature.
 
+The `mark` property tells Vega-Lite what type of visual "mark" to display our `data`. For a choropleth this will always be `geoshape`. Here we also specify colors for drawing those shapes.
+
+The `projection` property is used to lay out, or "project," the geospatial shapes into something visually "meaningful." What's meaningful will depend on context. The `albersUsa` projection is a commonly used projection for the United States. It centers the map around the continental United States. It also intentionally puts Alaska and Hawaii in the "wrong" places, but the overall result is more meaningful and concise for most readers. 
 
 ### Step 2: Add Color / Data
 For our example we'll use [population estimates from the U.S. Census Bureau](https://www.census.gov/data/tables/time-series/demo/popest/2010s-state-total.html). We've downloaded the data as a [CSV file](data/PEP_2018_PEPTCOMP.csv) and included it in [this document's repo](https://github.com/capta-journal/map) for archive.
@@ -209,3 +213,5 @@ We'll leave it to you to make that change. Here we'll do something a little fanc
 ```{vl file=pop_growth_rate.vl.json}
 ```
 
+#### Extra
+We also have pre-made map files for you to build other choropleths ([countries of the world](../../../world/capta.md), counties in US, etc.) And if you don’t see one that fits your need, you can create an issue on Github to ask the community for help. Chances are some other people will have the same need and will be happy to help create it.
