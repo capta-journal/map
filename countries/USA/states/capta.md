@@ -40,21 +40,58 @@ The foundation of a choropleth is a map, and this is often where most people get
 }
 ```
 
-Besides Vega-Lite's concise grammar for geospatial visualization, the other part of the secret sauce is in the file `cb_2018_us_state_5m.json`, referenced in the `data.url` property above. This file, in a geospatial file format called [TopoJSON](https://github.com/topojson/topojson), contains data (in lat/lon) for the shape and location of all 50 states. We created it based on digital data from the Census Bureau. The code and the gory details to generate this file is documented elsewhere. We're open-sourcing the resulting data so you can reuse it as a "black box."
+Besides Vega-Lite's concise grammar for geospatial visualization, the other part of the secret sauce is in the file `cb_2018_us_state_5m.json`, referenced in the `data.url` property above. This file, in a geospatial file format called [TopoJSON](https://github.com/topojson/topojson), contains data in lat/lon for the shape and location of all 50 states. We created it based on digital data from the Census Bureau. The code and the gory details to generate this file are documented elsewhere. We're open-sourcing the resulting data so you can reuse it as a "black box."
 
-Before continuing, let's understand the JSON spec file above in a bit more detail. The `$schema` property simply says this JSON file is a Vega-Lite specification. The `data` property points to our map file. Vega-Lite needs to know that this file is in TopoJSON `format.type`. A TopoJSON file can encode multiple `feature`s of a map to show different boundaries. For example, a map of the US may show states, counties, zip codes, etc. The `cb_2018_us_state_5m.json` file includes only the `states` feature.
+Before continuing, let's understand the JSON spec above in a bit more detail. The `$schema` property simply says this JSON file is a Vega-Lite specification. The `data` property points to our map file. Vega-Lite needs to know that this file is in TopoJSON `format.type`. A TopoJSON file can encode multiple `feature`s of a map to show different boundaries. For example, a map of the US may show states, counties, zip codes, etc. The `cb_2018_us_state_5m.json` file includes only the `states` feature.
 
 The `mark` property tells Vega-Lite what type of visual "mark" to display our `data`. For a choropleth this will always be `geoshape`. Here we also specify colors for drawing those shapes.
 
-The `projection` property is used to lay out, or "project," the geospatial shapes into something visually "meaningful." What's meaningful will depend on context. The `albersUsa` projection is a commonly used projection for the United States. It centers the map around the continental United States. It also intentionally puts Alaska and Hawaii in the "wrong" places, but the overall result is more meaningful and concise for most readers. 
+The `projection` property is used to lay out, or "project," the geospatial shapes into something visually "meaningful." What's meaningful will depend on context. The `albersUsa` projection is a commonly used projection for showing the US map. It centers the map around the continental United States. It also intentionally puts Alaska and Hawaii in the "wrong" places, but the overall result is more meaningful and concise for most readers. 
 
 ### Step 2: Add Color / Data
-For our example we'll use [population estimates from the U.S. Census Bureau](https://www.census.gov/data/tables/time-series/demo/popest/2010s-state-total.html). We've downloaded the data as a [CSV file](data/PEP_2018_PEPTCOMP.csv) and included it in [this document's repo](https://github.com/capta-journal/map) for archive.
+So we got a map. To make it a choropleth let's bring in some data to color the states. The example data we'll use is [population estimates from the U.S. Census Bureau](https://www.census.gov/data/tables/time-series/demo/popest/2010s-state-total.html)^[The full US census is taken once every ten years, with the last one in 2010. Our data set is an _estimate_ of population changes since then, up to 2018.]. The Census Bureau website provides functions for viewing and downloading the data but doesn't provide a permanent link it, so I've included the [CSV file](data/PEP_2018_PEPTCOMP.csv) as `PEP_2018_PEPTCOMP.csv` in [this document's repo](https://github.com/capta-journal/map). Let's look at the first four columns of a few rows of this dataset:
 
-https://www.census.gov/data/tables/time-series/demo/popest/2010s-state-total.html
+```csv
+GEO.id,GEO.id2,GEO.display-label,popchg4201072018
+0400000US01,01,Alabama,107733
+0400000US02,02,Alaska,27189
+0400000US04,04,Arizona,779358
+0400000US05,05,Arkansas,97797
+0400000US06,06,California,2302522
+```
+
+The column names are given by the Census Bureau, and `popchg4201072018` represents the net population change between April 2010 and July 2018. The [CSV file](data/PEP_2018_PEPTCOMP.csv) has other columns breaking down the changes due to births, deaths, and migrations (domestic and international). I'll leave it as an exercise for the interested reader to explore those data.^[The sharp-eyed reader will notice there are extra rows in `PEP_2018_PEPTCOMP.csv` for areas that are not states, such as "Northeast Region," "Midwest Region," and "Puerto Rico." The default behavior in the lookup transform is to ignore those data, which works well for us here. On the other hand, if you have _missing_ data, the default behavior is to drop those areas on the map, which is rarely what you want. See the [world choropleth](../../../world/capta.md) example on how to gray out areas with missing data rather than leave them blank.]
+
+Coloring areas on a choropleth is basically like filling out the color-by-number drawings for kids. To make it work, the coding on the map (`cb_2018_us_state_5m.json`) must be the same as the coding in our dataset (`PEP_2018_PEPTCOMP.csv`). In database parlance this is finding the join keys. Fortunately, unlike the color-by-number drawings for kids, our map supports more than one coding. The state map (`cb_2018_us_state_5m.json`) has the 2-digit [U.S. Federal Information Processing Standard](https://en.wikipedia.org/wiki/Federal_Information_Processing_Standard_state_code) (FIPS) code as the default `id` key. (California is '06'.) It also has the uppercase 2-letter state code as the `STUSPS` key ("CA"), and the full name as the `NAME` key ("California").
+
+Looking back at our CSV file (`PEP_2018_PEPTCOMP.csv`), the first three columns are redundant coding for state. The `GEO.id` column has a coding that our map file doesn't have, so we couldn't use it. The `GEO.id2` column matches the `id` key in our state map, so we could use that pair for matching areas. The `GEO.display-label` column also matches the `NAME` key in our map, so that pair would also work. Given this choice, I prefer the numeric keys (`id`/`GEO.id2`) over the text ones, as it's less likely to make matching errors due to misspellings or case sensitivity.
+
+With that background, let's extend our Vega-Lite spec from a bland map to a choropleth:
+
+```json
+{
+  "$schema": ...,
+  "data": ...,
+  "mark": ...,
+  "projection": ...,
+  "transform": [{
+    "lookup": "id",
+    "from": {
+      "data": { "url": "data/PEP_2018_PEPTCOMP.csv" },
+      "key": "GEO\\.id2",
+      "fields": ["popchg4201072018"]
+    }
+  }],
+  "encoding": {
+    "color": {
+      "field": "popchg4201072018",
+      "type": "quantitative"
+    }
+  }
+}
+```
 
 Note the use of `\\.` in specifying `key`.
-
 
 ```{vl}
 {
@@ -63,8 +100,8 @@ Note the use of `\\.` in specifying `key`.
     "url": "topojson/cb_2018_us_state_5m.json",
     "format": { "type": "topojson", "feature": "states" }
   },
-  "projection": { "type": "albersUsa" },
   "mark": { "type": "geoshape", "fill": "lightgray", "stroke": "gray" },
+  "projection": { "type": "albersUsa" },
   "transform": [{
     "lookup": "id",
     "from": {
